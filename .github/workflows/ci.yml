@@ -29,7 +29,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: '21'
 
       - name: Cache Maven repository
         uses: actions/cache@v4
@@ -66,7 +66,10 @@ jobs:
           PRIMARY_TAG="$IMAGE:sha-$SHORT_SHA"
 
           if [[ "${GITHUB_REF_TYPE}" == "branch" ]]; then
-            SAFE_BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-')
+            SAFE_BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g; s/-\{2,\}/-/g; s/^-//; s/-$//')
+            if [[ -z "$SAFE_BRANCH" ]]; then
+              SAFE_BRANCH="sha-$SHORT_SHA"
+            fi
             TAGS="$TAGS\n$IMAGE:branch-$SAFE_BRANCH"
             if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
               VERSION=${{ steps.version.outputs.sanitized }}
