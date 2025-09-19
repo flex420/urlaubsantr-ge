@@ -1,11 +1,12 @@
 name: Build and Publish
 
+
 on:
   push:
     branches:
-      - '**'
+      - "**"
     tags:
-      - '*'
+      - "*"
   pull_request:
     branches:
       - main
@@ -29,7 +30,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: "21"
 
       - name: Cache Maven repository
         uses: actions/cache@v4
@@ -66,7 +67,7 @@ jobs:
           PRIMARY_TAG="$IMAGE:sha-$SHORT_SHA"
 
           if [[ "${GITHUB_REF_TYPE}" == "branch" ]]; then
-            SAFE_BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g; s/-\{2,\}/-/g; s/^-//; s/-$//')
+            SAFE_BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | sed ''s/[^a-z0-9]/-/g; s/-\{2,\}/-/g; s/^-//; s/-$//'')
             if [[ -z "$SAFE_BRANCH" ]]; then
               SAFE_BRANCH="sha-$SHORT_SHA"
             fi
@@ -100,7 +101,8 @@ jobs:
           context: .
           push: ${{ github.event_name == 'push' }}
           load: true
-          tags: ${{ steps.tags.outputs.list }}
+          tags: |
+            ${{ steps.tags.outputs.list }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
