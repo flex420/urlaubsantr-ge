@@ -39,15 +39,17 @@ jobs:
           restore-keys: ${{ runner.os }}-m2-
 
       - name: Run unit tests
-        run: ./app/urlaubsverwaltung/mvnw -B -DskipITs test
+        working-directory: app/urlaubsverwaltung
+        run: ./mvnw -B -DskipITs test
 
       - name: Verify Docker and Compose
         run: bash ./scripts/verify.sh
 
       - name: Extract project version
         id: version
+        working-directory: app/urlaubsverwaltung
         run: |
-          VERSION=$(./app/urlaubsverwaltung/mvnw -q help:evaluate -Dexpression=project.version -DforceStdout)
+          VERSION=$(./mvnw -q help:evaluate -Dexpression=project.version -DforceStdout)
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           if [[ "$VERSION" == *-SNAPSHOT ]]; then
             echo "sanitized=${VERSION%-SNAPSHOT}" >> "$GITHUB_OUTPUT"
