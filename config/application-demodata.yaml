@@ -1,0 +1,50 @@
+uv:
+  mail:
+    from: ${UV_MAIL_FROM:urlaubsverwaltung@example.org}
+    replyTo: ${UV_MAIL_REPLYTO:no-reply@example.org}
+    application-url: ${UV_MAIL_APPLICATIONURL:http://localhost:8080}
+  calendar:
+    organizer: ${UV_CALENDAR_ORGANIZER:organizer@example.org}
+  development:
+    demodata:
+      create: true
+      local-development: true
+  info-banner:
+    enabled: true
+    text:
+      en: Development
+      de: Development
+
+spring:
+  mail:
+    host: ${SPRING_MAIL_HOST:mailpit}
+    port: ${SPRING_MAIL_PORT:1025}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://keycloak:8080/realms/urlaubsverwaltung}
+      client:
+        registration:
+          default:
+            client-id: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DEFAULT_CLIENT_ID:urlaubsverwaltung}
+            client-secret: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DEFAULT_CLIENT_SECRET:urlaubsverwaltung-secret}
+            provider: default
+            scope: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DEFAULT_SCOPE:openid,profile,email,roles}
+            authorization-grant-type: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DEFAULT_AUTHORIZATION_GRANT_TYPE:authorization_code}
+            redirect-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DEFAULT_REDIRECT_URI:http://localhost:8080/login/oauth2/code/{registrationId}}
+        provider:
+          default:
+            issuer-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_DEFAULT_ISSUER_URI:http://keycloak:8080/realms/urlaubsverwaltung}
+  web:
+    resources:
+      chain:
+        cache: false
+        strategy:
+          content:
+            enabled: false
+      cache:
+        cachecontrol:
+          cache-public: false
+          cache-private: false
+          max-age: 0

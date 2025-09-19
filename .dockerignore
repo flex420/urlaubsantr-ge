@@ -1,0 +1,21 @@
+# Root VCS metadata and docs
+.git
+.gitmodules
+.github
+
+# Local configuration files
+.env
+.env.*
+
+# Development assets not needed in build context
+compose/
+scripts/
+
+# Module internals
+app/urlaubsverwaltung/.git
+app/urlaubsverwaltung/.github
+app/urlaubsverwaltung/target/
+
+# OS noise
+**/.DS_Store
+**/Thumbs.db

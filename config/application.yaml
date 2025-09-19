@@ -1,0 +1,72 @@
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: native
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/urlaubsverwaltung}
+    username: ${SPRING_DATASOURCE_USERNAME:urlaubsverwaltung}
+    password: ${SPRING_DATASOURCE_PASSWORD:urlaubsverwaltung}
+  jpa:
+    open-in-view: false
+  session:
+    jdbc:
+      initialize-schema: always
+  liquibase:
+    change-log: classpath:/dbchangelogs/changelogmaster.xml
+  mail:
+    host: ${SPRING_MAIL_HOST:mailpit}
+    port: ${SPRING_MAIL_PORT:1025}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          starttls:
+            enable: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE:false}
+  security:
+    oauth2:
+      client:
+        registration:
+          default:
+            client-id: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DEFAULT_CLIENT_ID:}
+            client-secret: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DEFAULT_CLIENT_SECRET:}
+            client-name: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DEFAULT_CLIENT_NAME:Urlaubsverwaltung}
+            provider: default
+            scope: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DEFAULT_SCOPE:openid,profile,email,roles}
+            authorization-grant-type: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DEFAULT_AUTHORIZATION_GRANT_TYPE:authorization_code}
+            redirect-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DEFAULT_REDIRECT_URI:http://localhost:8080/login/oauth2/code/{registrationId}}
+        provider:
+          default:
+            issuer-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_DEFAULT_ISSUER_URI:}
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info,health,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      mail:
+        enabled: ${MANAGEMENT_HEALTH_MAIL_ENABLED:false}
+
+uv:
+  mail:
+    from: ${UV_MAIL_FROM:urlaubsverwaltung@example.org}
+    fromDisplayName: ${UV_MAIL_FROMDISPLAYNAME:Urlaubsverwaltung}
+    replyTo: ${UV_MAIL_REPLYTO:no-reply@example.org}
+    replyToDisplayName: ${UV_MAIL_REPLYTODISPLAYNAME:Urlaubsverwaltung}
+    application-url: ${UV_MAIL_APPLICATIONURL:http://localhost:8080}
+  calendar:
+    organizer: ${UV_CALENDAR_ORGANIZER:organizer@example.org}
+  security:
+    oidc:
+      claim-mappers:
+        group-claim:
+          enabled: ${UV_SECURITY_OIDC_CLAIM_MAPPERS_GROUP_CLAIM_ENABLED:false}
+          claim-name: ${UV_SECURITY_OIDC_CLAIM_MAPPERS_GROUP_CLAIM_CLAIM_NAME:groups}

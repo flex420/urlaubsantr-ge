@@ -1,0 +1,54 @@
+services:
+  app:
+    build:
+      context: ..
+    image: ${IMAGE_NAME:-flex420/urlaubsverwaltung}:${IMAGE_TAG:-dev}
+    environment:
+      SPRING_PROFILES_ACTIVE: demodata
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-urlaubsverwaltung}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-urlaubsverwaltung}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-urlaubsverwaltung}
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: ${MAILPIT_SMTP_PORT:-1025}
+      UV_MAIL_APPLICATIONURL: http://localhost:8080
+      UV_MAIL_FROM: ${UV_MAIL_FROM:-urlaubsverwaltung@example.org}
+      UV_MAIL_FROMDISPLAYNAME: ${UV_MAIL_FROMDISPLAYNAME:-Urlaubsverwaltung}
+      UV_MAIL_REPLYTO: ${UV_MAIL_REPLYTO:-no-reply@example.org}
+      UV_MAIL_REPLYTODISPLAYNAME: ${UV_MAIL_REPLYTODISPLAYNAME:-Urlaubsverwaltung}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15.6
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-urlaubsverwaltung}
+      POSTGRES_USER: ${POSTGRES_USER:-urlaubsverwaltung}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-urlaubsverwaltung}
+    ports:
+      - "5434:5432"
+    volumes:
+      - urlaubsverwaltung-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
+
+  mailpit:
+    image: axllent/mailpit:v1.27.8
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_DASHBOARD_PORT:-8025}:8025"
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+volumes:
+  urlaubsverwaltung-data:

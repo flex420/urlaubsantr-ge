@@ -1,0 +1,3 @@
+[submodule "app/urlaubsverwaltung"]
+	path = app/urlaubsverwaltung
+	url = https://github.com/urlaubsverwaltung/urlaubsverwaltung.git
