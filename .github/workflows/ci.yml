@@ -2,10 +2,13 @@ name: Build and Publish
 
 on:
   push:
-    branches: [ main ]
-    tags: [ 'v*' ]
+    branches:
+      - '**'
+    tags:
+      - '*'
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 env:
   IMAGE_NAME: flex420/urlaubsverwaltung
@@ -56,18 +59,24 @@ jobs:
         id: tags
         run: |
           IMAGE=${{ env.IMAGE_NAME }}
-          VERSION=${{ steps.version.outputs.sanitized }}
           SHORT_SHA=${GITHUB_SHA::12}
-          TAGS="$IMAGE:$VERSION\n$IMAGE:sha-$SHORT_SHA"
-          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
-              TAGS="$TAGS\n$IMAGE:latest"
-            elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-              REF_TAG="${GITHUB_REF#refs/tags/}"
-              TAGS="$TAGS\n$IMAGE:$REF_TAG"
+          TAGS="$IMAGE:sha-$SHORT_SHA"
+          PRIMARY_TAG="$IMAGE:sha-$SHORT_SHA"
+
+          if [[ "${GITHUB_REF_TYPE}" == "branch" ]]; then
+            SAFE_BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-')
+            TAGS="$TAGS\n$IMAGE:branch-$SAFE_BRANCH"
+            if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+              VERSION=${{ steps.version.outputs.sanitized }}
+              TAGS="$TAGS\n$IMAGE:$VERSION\n$IMAGE:latest"
             fi
+          elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            TAGS="$TAGS\n$IMAGE:${GITHUB_REF_NAME}"
+            PRIMARY_TAG="$IMAGE:${GITHUB_REF_NAME}"
           fi
+
           printf 'list<<EOF\n%s\nEOF\n' "$TAGS" >> "$GITHUB_OUTPUT"
+          echo "primary=$PRIMARY_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Login to Docker Hub
         if: github.event_name == 'push'
@@ -90,7 +99,7 @@ jobs:
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.sanitized }}
+          image: ${{ steps.tags.outputs.primary }}
           format: spdx-json
           output-file: sbom.spdx.json
 

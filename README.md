@@ -138,7 +138,7 @@ docker compose \
 1. Checks out this repo and pulls the upstream submodule.
 2. Executes the upstream unit test suite via `./app/urlaubsverwaltung/mvnw -B -DskipITs test`.
 3. Runs `scripts/verify.sh` to lint the Docker context and Compose files.
-4. Builds the production image with caching and pushes tagged images to Docker Hub (`flex420/urlaubsverwaltung`) on `main` and version tags.
+4. Builds the production image with caching and publishes to Docker Hub after every push using commit and branch tags (plus latest/release tags on main).
 5. Publishes a lightweight SBOM and attaches it as workflow artifact.
 GitHub secrets required (already provisioned):
 
