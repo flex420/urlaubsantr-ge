@@ -1,12 +1,11 @@
 name: Build and Publish
 
-
 on:
   push:
     branches:
-      - "**"
+      - '**'
     tags:
-      - "*"
+      - '*'
   pull_request:
     branches:
       - main
@@ -30,7 +29,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: '21'
 
       - name: Cache Maven repository
         uses: actions/cache@v4
@@ -63,26 +62,31 @@ jobs:
         run: |
           IMAGE=${{ env.IMAGE_NAME }}
           SHORT_SHA=${GITHUB_SHA::12}
-          TAGS="$IMAGE:sha-$SHORT_SHA"
           PRIMARY_TAG="$IMAGE:sha-$SHORT_SHA"
+          TAGS=()
+          TAGS+=("$PRIMARY_TAG")
 
           if [[ "${GITHUB_REF_TYPE}" == "branch" ]]; then
-            SAFE_BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | sed ''s/[^a-z0-9]/-/g; s/-\{2,\}/-/g; s/^-//; s/-$//'')
+            SAFE_BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' '-' | sed 's/-\{2,\}/-/g; s/^-//; s/-$//')
             if [[ -z "$SAFE_BRANCH" ]]; then
               SAFE_BRANCH="sha-$SHORT_SHA"
             fi
-            TAGS="$TAGS\n$IMAGE:branch-$SAFE_BRANCH"
+            TAGS+=("$IMAGE:branch-$SAFE_BRANCH")
             if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
               VERSION=${{ steps.version.outputs.sanitized }}
-              TAGS="$TAGS\n$IMAGE:$VERSION\n$IMAGE:latest"
+              TAGS+=("$IMAGE:$VERSION" "$IMAGE:latest")
             fi
           elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            TAGS="$TAGS\n$IMAGE:${GITHUB_REF_NAME}"
+            TAGS+=("$IMAGE:${GITHUB_REF_NAME}")
             PRIMARY_TAG="$IMAGE:${GITHUB_REF_NAME}"
           fi
 
-          printf 'list<<EOF\n%s\nEOF\n' "$TAGS" >> "$GITHUB_OUTPUT"
-          echo "primary=$PRIMARY_TAG" >> "$GITHUB_OUTPUT"
+          {
+            echo "list<<EOF"
+            printf '%s\n' "${TAGS[@]}"
+            echo "EOF"
+            echo "primary=$PRIMARY_TAG"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Login to Docker Hub
         if: github.event_name == 'push'
