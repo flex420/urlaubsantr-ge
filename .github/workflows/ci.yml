@@ -57,36 +57,16 @@ jobs:
             echo "sanitized=${VERSION}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Compute image tags
-        id: tags
-        run: |
-          IMAGE=${{ env.IMAGE_NAME }}
-          SHORT_SHA=${GITHUB_SHA::12}
-          PRIMARY_TAG="$IMAGE:sha-$SHORT_SHA"
-          TAGS=()
-          TAGS+=("$PRIMARY_TAG")
-
-          if [[ "${GITHUB_REF_TYPE}" == "branch" ]]; then
-            SAFE_BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' '-' | sed 's/-\{2,\}/-/g; s/^-//; s/-$//')
-            if [[ -z "$SAFE_BRANCH" ]]; then
-              SAFE_BRANCH="sha-$SHORT_SHA"
-            fi
-            TAGS+=("$IMAGE:branch-$SAFE_BRANCH")
-            if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
-              VERSION=${{ steps.version.outputs.sanitized }}
-              TAGS+=("$IMAGE:$VERSION" "$IMAGE:latest")
-            fi
-          elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            TAGS+=("$IMAGE:${GITHUB_REF_NAME}")
-            PRIMARY_TAG="$IMAGE:${GITHUB_REF_NAME}"
-          fi
-
-          {
-            echo "list<<EOF"
-            printf '%s\n' "${TAGS[@]}"
-            echo "EOF"
-            echo "primary=$PRIMARY_TAG"
-          } >> "$GITHUB_OUTPUT"
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-
+            type=ref,event=branch
+            type=raw,value=${{ steps.version.outputs.sanitized }},enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Login to Docker Hub
         if: github.event_name == 'push'
@@ -105,15 +85,15 @@ jobs:
           context: .
           push: ${{ github.event_name == 'push' }}
           load: true
-          tags: |
-            ${{ steps.tags.outputs.list }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ steps.tags.outputs.primary }}
+          image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
           format: spdx-json
           output-file: sbom.spdx.json
 
